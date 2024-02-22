@@ -2,12 +2,22 @@ local quick = {}
 
 local dir_sep = package.config:sub(1, 1)
 
-local cfg = require("luarocks.core.cfg")
-local dir = require("luarocks.dir")
-local fs = require("luarocks.fs")
-local versions = require("spec.util.versions")
-cfg.init()
-fs.init()
+local cfg, dir, fs, versions
+local initialized = false
+
+local function initialize()
+   if initialized then
+      return
+   end
+   initialized = true
+
+   cfg = require("luarocks.core.cfg")
+   dir = require("luarocks.dir")
+   fs = require("luarocks.fs")
+   versions = require("spec.util.versions")
+   cfg.init()
+   fs.init()
+end
 
 local function native_slash(pathname)
    return (pathname:gsub("[/\\]", dir_sep))
@@ -30,6 +40,8 @@ local function parse(filename)
    local fd = assert(io.open(filename, "r"))
    local input = assert(fd:read("*a"))
    fd:close()
+
+   initialize()
 
    local tests = {}
 
