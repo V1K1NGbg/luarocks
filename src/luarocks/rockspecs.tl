@@ -181,6 +181,7 @@ function rockspecs.from_persisted_table(filename: string, rockspec: Rockspec, gl
          if errfromdep then
             return nil, "Invalid dependency in rockspec: " .. errfromdep
          end
+         table.insert(rockspec.build_dependencies, build_pkg_name)
          table.insert(rockspec.build_dependencies.queries, query)
       end
    end

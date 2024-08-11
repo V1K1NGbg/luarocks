@@ -126,11 +126,12 @@ local function match_dep(depq,
    return latest_vstring, locations[latest_vstring], depq, provided
 end
 
-local function match_all_deps(dependencies,
+local function match_all_deps(depqueries,
    get_versions)
+
    local matched, missing, no_upgrade = {}, {}, {}
 
-   for _, depq in ipairs(dependencies) do
+   for _, depq in ipairs(depqueries) do
       local found, _, provided
       found, _, depq, provided = match_dep(depq, get_versions)
       if found then
@@ -141,7 +142,7 @@ local function match_all_deps(dependencies,
          if depq.constraints and depq.constraints[1] and depq.constraints[1].no_upgrade then
             no_upgrade[depq.name] = depq
          else
-            -- missing[depq.name] = depq
+            missing[depq.name] = depq
          end
       end
    end
@@ -164,7 +165,7 @@ end
 function deps.match_deps(dependencies, rocks_provided, deps_mode, skip_set)
 
    local get_versions = prepare_get_versions(deps_mode, rocks_provided, "dependencies", skip_set)
-   return match_all_deps(dependencies, get_versions)
+   return match_all_deps(dependencies.queries, get_versions)
 end
 
 local function rock_status(dep, get_versions)
@@ -688,23 +689,23 @@ function deps.scan_deps(results, mdeps, name, version, deps_mode)
    end
    if not mdeps[name] then mdeps[name] = {} end
    local mdn = mdeps[name]
-   local dependencies = mdn[version]
+   local depqueries = mdn[version]
    local rocks_provided
-   if not dependencies then
+   if not depqueries then
       local rockspec = fetch.load_local_rockspec(path.rockspec_file(name, version), false)
       if not rockspec then
          return
       end
-      dependencies = rockspec.dependencies.queries
+      depqueries = rockspec.dependencies.queries
       rocks_provided = rockspec.rocks_provided
-      mdn[version] = dependencies
+      mdn[version] = depqueries
    else
       rocks_provided = util.get_rocks_provided()
    end
 
    local get_versions = prepare_get_versions(deps_mode, rocks_provided, "dependencies")
 
-   local matched = match_all_deps(dependencies, get_versions)
+   local matched = match_all_deps(depqueries, get_versions)
    results[name] = version
    for _, match in pairs(matched) do
       deps.scan_deps(results, mdeps, match.name, match.version, deps_mode)

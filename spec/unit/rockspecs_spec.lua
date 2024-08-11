@@ -28,6 +28,7 @@ describe("luarocks.rockspecs #unit", function()
 
       assert(rockspec == out)
       assert.same(rockspec.build_dependencies, {
+         "luarocks-build-foo",
          queries = {
             { name = "luarocks-build-foo", constraints = {} }
          },

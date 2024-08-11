@@ -35,7 +35,7 @@ query.Query.substring = false
 
 --- Convert the arch field of a query table to table format.
 -- @param input string, table or nil
-local function arch_to_table(input: string | {string: boolean}): {string: boolean} 
+local function arch_to_table(input: string | {string: boolean}): {string: boolean}
    if input is {string: boolean} then
       return input
    elseif input is string then
@@ -194,7 +194,7 @@ end
 -- Includes namespace, name and version, but not arch or constraints.
 -- @param query table: a query table
 -- @return string: a result such as `my_user/my_rock 1.0` or `my_rock`.
-function query_mt.__tostring(self: Query): string
+function query_mt.__tostring(self: query.Query): string
    local out = {}
    if self.namespace then
       table.insert(out, self.namespace)
@@ -210,7 +210,7 @@ function query_mt.__tostring(self: Query): string
          local v: string
          if cv is Version then
             v = cv.string
-         else 
+         else
             v = cv
          end
          if c.op == "==" then

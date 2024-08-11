@@ -97,7 +97,7 @@ end
 -- 2. nil
 -- 3. either 'dep' or an alternative query to be used
 -- 4. false
-local function match_dep(depq: Query, 
+local function match_dep(depq: Query,
    get_versions: function(Query): {string}, {string: string | Tree}, string, boolean): string, string | Tree, Query, boolean
 
    local versions, locations, lockversion, provided = get_versions(depq)
@@ -126,12 +126,12 @@ local function match_dep(depq: Query,
    return latest_vstring, locations[latest_vstring], depq, provided
 end
 
-local function match_all_deps(dependencies: {Query}, 
+local function match_all_deps(depqueries: {Query},
    get_versions: function(Query): {string}, {string: string | Tree}, string, boolean): {Query: Result}, {string: Query}, {string: Query}
 
    local matched, missing, no_upgrade = {}, {}, {}
 
-   for _, depq in ipairs(dependencies) do
+   for _, depq in ipairs(depqueries) do
       local found, _, provided: string, string | Tree, boolean
       found, _, depq, provided = match_dep(depq, get_versions)
       if found then
@@ -162,10 +162,10 @@ end
 -- parsed as tables; and a table of "no-upgrade" missing dependencies
 -- (to be used in plugin modules so that a plugin does not force upgrade of
 -- its parent application).
-function deps.match_deps(dependencies: {Query}, rocks_provided: {string: string}, deps_mode: string, skip_set?: {string: {string: boolean}}): {Query : Result}, {string : Query}, {string : Query}
+function deps.match_deps(dependencies: Dependencies, rocks_provided: {string: string}, deps_mode: string, skip_set?: {string: {string: boolean}}): {Query : Result}, {string : Query}, {string : Query}
 
    local get_versions = prepare_get_versions(deps_mode, rocks_provided, "dependencies", skip_set)
-   return match_all_deps(dependencies, get_versions)
+   return match_all_deps(dependencies.queries, get_versions)
 end
 
 local function rock_status(dep: Query, get_versions: function(Query): {string}, {string : string | Tree}, string, boolean): string, string
@@ -300,11 +300,11 @@ function deps.fulfill_dependencies(rockspec: Rockspec, depskey: string, deps_mod
       local get_versions = prepare_get_versions("none", rocks_provided, depskey)
       local dnsnamestr, dversionstr: string, string
       for dnsname, dversion in deplocks.each(depskey) do
-         if dnsname is string then 
-            dnsnamestr = dnsname 
+         if dnsname is string then
+            dnsnamestr = dnsname
          end
-         if dversion is string then 
-            dversionstr = dversion 
+         if dversion is string then
+            dversionstr = dversion
          end
          local dname, dnamespace = util.split_namespace(dnsnamestr)
          local depq = queries.new(dname, dnamespace, dversionstr)
@@ -603,7 +603,7 @@ function deps.autodetect_external_dependencies(build: Build): {string : {string 
          local librariesstr: string | {string} = data.libraries
          if librariesstr is string then
             libraries = { librariesstr }
-         else 
+         else
             libraries = librariesstr
          end
          local incdirs = {}
@@ -689,23 +689,23 @@ function deps.scan_deps(results: {string: string}, mdeps: {string: {string: {Que
    end
    if not mdeps[name] then mdeps[name] = {} end
    local mdn = mdeps[name]
-   local dependencies = mdn[version]
+   local depqueries = mdn[version]
    local rocks_provided: {string : string}
-   if not dependencies then
+   if not depqueries then
       local rockspec = fetch.load_local_rockspec(path.rockspec_file(name, version), false)
       if not rockspec then
          return
       end
-      dependencies = rockspec.dependencies.queries
+      depqueries = rockspec.dependencies.queries
       rocks_provided = rockspec.rocks_provided
-      mdn[version] = dependencies
+      mdn[version] = depqueries
    else
       rocks_provided = util.get_rocks_provided()
    end
 
    local get_versions = prepare_get_versions(deps_mode, rocks_provided, "dependencies")
 
-   local matched = match_all_deps(dependencies, get_versions)
+   local matched = match_all_deps(depqueries, get_versions)
    results[name] = version
    for _, match in pairs(matched) do
       deps.scan_deps(results, mdeps, match.name, match.version, deps_mode)

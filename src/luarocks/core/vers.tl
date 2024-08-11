@@ -199,9 +199,9 @@ function vers.match_constraints(version: Version, constraints: {Constraint}): bo
       if     constr_op == "==" then ok = version == cv
       elseif constr_op == "~=" then ok = version ~= cv
       elseif constr_op == ">"  then ok = cv <  version
-      elseif constr_op == "<"  then ok = version <  cv 
+      elseif constr_op == "<"  then ok = version <  cv
       elseif constr_op == ">=" then ok = cv <=  version
-      elseif constr_op == "<=" then ok = version <= cv 
+      elseif constr_op == "<=" then ok = version <= cv
       elseif constr_op == "~>" then ok = partial_match(version, cv)
       end
       if not ok then break end
