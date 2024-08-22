@@ -12,7 +12,7 @@ local rockspecs = require("luarocks.rockspecs")
 local type_rockspec = require("luarocks.type.rockspec")
 local util = require("luarocks.util")
 
-local argparse = require("luarocks.vendor.argparse")
+local type argparse = require("luarocks.vendor.argparse")
 local type Parser = argparse.Parser
 local type Option = argparse.Option
 

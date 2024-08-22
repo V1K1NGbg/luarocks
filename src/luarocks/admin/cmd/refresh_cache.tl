@@ -7,8 +7,7 @@ local cfg = require("luarocks.core.cfg")
 local util = require("luarocks.util")
 local cache = require("luarocks.admin.cache")
 
-local argparse = require("luarocks.vendor.argparse")
-local type Parser = argparse.Parser
+local type Parser = require("luarocks.vendor.argparse").Parser
 
 local type Args = require("luarocks.core.types.args").Args
 

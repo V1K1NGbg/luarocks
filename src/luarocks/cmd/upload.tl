@@ -20,8 +20,7 @@ local Api = require("luarocks.upload.api")
 
 local type Response = upload.Response
 
-local argparse = require("luarocks.vendor.argparse")
-local type Parser = argparse.Parser
+local type Parser = require("luarocks.vendor.argparse").Parser
 
 local type Args = require("luarocks.core.types.args").Args
 

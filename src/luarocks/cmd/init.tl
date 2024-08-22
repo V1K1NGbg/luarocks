@@ -12,8 +12,7 @@ local util = require("luarocks.util")
 local persist = require("luarocks.persist")
 local write_rockspec = require("luarocks.cmd.write_rockspec")
 
-local argparse = require("luarocks.vendor.argparse")
-local type Parser = argparse.Parser
+local type Parser = require("luarocks.vendor.argparse").Parser
 
 local type Args = require("luarocks.core.types.args").Args
 

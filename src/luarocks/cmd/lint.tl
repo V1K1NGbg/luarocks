@@ -8,8 +8,7 @@ local util = require("luarocks.util")
 local download = require("luarocks.download")
 local fetch = require("luarocks.fetch")
 
-local argparse = require("luarocks.vendor.argparse")
-local type Parser = argparse.Parser
+local type Parser = require("luarocks.vendor.argparse").Parser
 
 local type Args = require("luarocks.core.types.args").Args
 

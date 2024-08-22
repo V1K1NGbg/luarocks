@@ -12,8 +12,7 @@ local fs = require("luarocks.fs")
 local dir = require("luarocks.dir")
 local type_rockspec = require("luarocks.type.rockspec")
 
-local argparse = require("luarocks.vendor.argparse")
-local type Parser = argparse.Parser
+local type Parser = require("luarocks.vendor.argparse").Parser
 
 local type Args = require("luarocks.core.types.args").Args
 

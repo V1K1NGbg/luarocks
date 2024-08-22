@@ -52,8 +52,7 @@ util.matchquote = core.matchquote
 local type Fn = util.Fn
 local type Rockspec = require("luarocks.core.types.rockspec").Rockspec
 
-local argparse = require("luarocks.vendor.argparse")
-local type Parser = argparse.Parser
+local type Parser = require("luarocks.vendor.argparse").Parser
 
 
 local scheduled_functions: {Fn} = {}
