@@ -6,6 +6,11 @@ local record api
    end
 
    record Api
+      load_config: function(Api): Configuration
+      save_config: function(Api): boolean, string
+      check_version: function(Api): boolean, string
+      method: function(Api, string, ...:Parameters): {string : any}, string
+      raw_method: function(Api, string, ...:Parameters): {string : any}, string
       request: function(Api, string, ?Parameters, ?Parameters): {string : any}, string
       config: Configuration
       debug: boolean
@@ -42,6 +47,72 @@ function api.Api:load_config(): Configuration
    if not upload_conf then return nil end
    local config = persist.load_into_table(upload_conf) as Configuration
    return config
+end
+
+function api.Api:save_config(): boolean, string
+   -- Test configuration before saving it.
+   local res, errraw = self:raw_method("status")
+   if not res then
+      return nil, errraw
+   end
+   local reserrors = res.errors
+   if reserrors is {string} then
+      return nil, ("Server error: " .. tostring(reserrors[1]))
+   end
+   local upload_conf = upload_config_file()
+   if not upload_conf then return nil end
+   local ok, errmake = fs.make_dir(dir.dir_name(upload_conf))
+   if not ok then
+      return nil, errmake
+   end
+   persist.save_from_table(upload_conf, self.config as PersistableTable)
+   fs.set_permissions(upload_conf, "read", "user")
+   return true
+end
+
+function api.Api:check_version(): boolean, string
+   if not self._server_tool_version then
+      local tool_version = cfg.upload.tool_version
+      local res, err = self:request(tostring(self.config.server) .. "/api/tool_version", {
+        current = tool_version
+      })
+      if not res then
+         return nil, err
+      end
+      if not res.version then
+         return nil, "failed to fetch tool version"
+      end
+      self._server_tool_version = tostring(res.version)
+      if res.force_update then
+         return nil, "Your upload client is too out of date to continue, please upgrade LuaRocks."
+      end
+      if res.version ~= tool_version then
+         util.warning("your LuaRocks is out of date, consider upgrading.")
+      end
+   end
+   return true
+end
+
+function api.Api:method(path: string, ...: Parameters): {string : any}, string
+   local res, err = self:raw_method(path, ...)
+   if not res then
+      return nil, err
+   end
+   local reserrors = res.errors
+   if reserrors is {string} then --! not checking the contents
+      if reserrors[1] == "Invalid key" then
+         return nil, reserrors[1] .. " (use the --api-key flag to change)"
+      end
+      local msg = table.concat(reserrors, ", ")
+      return nil, "API Failed: " .. msg
+   end
+   return res
+end
+
+function api.Api:raw_method(path: string, ...: Parameters): {string : any}, string
+   self:check_version()
+   local url = tostring(self.config.server) .. "/api/" .. tostring(cfg.upload.api_version) .. "/" .. tostring(self.config.key) .. "/" .. path
+   return self:request(url, ...)
 end
 
 local function encode_query_string(t: Parameters, sep?: string): string
@@ -202,72 +273,6 @@ else -- use LuaSocket and LuaSec
       return nil, "API returned " .. tostring(status) .. " - " .. redact_api_url(url)
    end
 
-end
-
-function api.Api:check_version(): boolean, string
-   if not self._server_tool_version then
-      local tool_version = cfg.upload.tool_version
-      local res, err = self:request(tostring(self.config.server) .. "/api/tool_version", {
-        current = tool_version
-      })
-      if not res then
-         return nil, err
-      end
-      if not res.version then
-         return nil, "failed to fetch tool version"
-      end
-      self._server_tool_version = tostring(res.version)
-      if res.force_update then
-         return nil, "Your upload client is too out of date to continue, please upgrade LuaRocks."
-      end
-      if res.version ~= tool_version then
-         util.warning("your LuaRocks is out of date, consider upgrading.")
-      end
-   end
-   return true
-end
-
-function api.Api:raw_method(path: string, ...: Parameters): {string : any}, string
-   self:check_version()
-   local url = tostring(self.config.server) .. "/api/" .. tostring(cfg.upload.api_version) .. "/" .. tostring(self.config.key) .. "/" .. path
-   return self:request(url, ...)
-end
-
-function api.Api:method(path: string, ...: Parameters): {string : any}, string
-   local res, err = self:raw_method(path, ...)
-   if not res then
-      return nil, err
-   end
-   local reserrors = res.errors
-   if reserrors is {string} then --! not checking the contents
-      if reserrors[1] == "Invalid key" then
-         return nil, reserrors[1] .. " (use the --api-key flag to change)"
-      end
-      local msg = table.concat(reserrors, ", ")
-      return nil, "API Failed: " .. msg
-   end
-   return res
-end
-
-function api.Api:save_config(): boolean, string
-   -- Test configuration before saving it.
-   local res, errraw = self:raw_method("status")
-   if not res then
-      return nil, errraw
-   end
-   local reserrors = res.errors
-   if reserrors is {string} then
-      return nil, ("Server error: " .. tostring(reserrors[1]))
-   end
-   local upload_conf = upload_config_file()
-   if not upload_conf then return nil end
-   local ok, errmake = fs.make_dir(dir.dir_name(upload_conf))
-   if not ok then
-      return nil, errmake
-   end
-   persist.save_from_table(upload_conf, self.config as PersistableTable)
-   fs.set_permissions(upload_conf, "read", "user")
-   return true
 end
 
 function api.new(args: Args): Api, string
