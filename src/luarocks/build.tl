@@ -1,6 +1,6 @@
 
 local record build
-   record Builds
+   record Builder
       skip_lua_inc_lib_check: boolean
       run: function(Rockspec, boolean): boolean, string, string
       autodetect_modules: function({string}, {string}, {string}):  {string : string | Module}, Build.Install, {string}
@@ -33,7 +33,7 @@ local type Module = require("luarocks.core.types.build").BuiltinBuild.Module
 local type BOpts = require("luarocks.core.types.bopts").BOpts
 
 
-local type Builds = build.Builds
+local type Builder = build.Builder
 
 do
    --- Write to the current directory the contents of a table,
@@ -229,15 +229,15 @@ local function run_build_driver(rockspec: Rockspec, no_install: boolean): boolea
       btype = "builtin"
       rockspec.build.type = btype
    end
-   local driver: Builds
+   local driver: Builder
    if cfg.accepted_build_types and not fun.contains(cfg.accepted_build_types, btype) then
       return nil, "This rockspec uses the '"..btype.."' build type, which is blocked by the 'accepted_build_types' setting in your LuaRocks configuration."
    end
-   local pok, driver_str = pcall(require, "luarocks.build." .. btype) as (boolean, Builds | string)
-   if not driver_str is Builds then
+   local pok, driver_str = pcall(require, "luarocks.build." .. btype) as (boolean, Builder | string)
+   if not driver_str is Builder then
       return nil, "Failed initializing build back-end for build type '"..btype.."': "..driver_str
    else
-      driver = driver_str as Builds
+      driver = driver_str as Builder
    end
 
    if not driver.skip_lua_inc_lib_check then
