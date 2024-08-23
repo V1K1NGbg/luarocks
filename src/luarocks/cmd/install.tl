@@ -70,7 +70,6 @@ end
 -- @return (string, string) or (nil, string, [string]): Name and version of
 -- installed rock if succeeded or nil and an error message followed by an error code.
 function install.install_binary_rock(rock_file: string, opts: IOpts): string, string, string
-   assert(type(rock_file) == "string")
 
    local namespace = opts.namespace
    local deps_mode = opts.deps_mode
@@ -143,7 +142,6 @@ end
 -- the rock whose dependencies were installed if succeeded or nil and an error message
 -- followed by an error code.
 function install.install_binary_rock_deps(rock_file: string, opts: IOpts): string, string, string
-   assert(type(rock_file) == "string")
 
    local name, version, arch = path.parse_name(rock_file)
    if not name then
