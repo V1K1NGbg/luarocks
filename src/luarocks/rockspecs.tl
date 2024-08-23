@@ -10,9 +10,8 @@ local type_rockspec = require("luarocks.type.rockspec")
 local util = require("luarocks.util")
 local vers = require("luarocks.core.vers")
 
-local rock = require("luarocks.core.types.rockspec")
-local type Dependencies = rock.Dependencies
-local type Rockspec = rock.Rockspec
+local type Rockspec = require("luarocks.core.types.rockspec").Rockspec
+local type Dependencies = require("luarocks.core.types.rockspec").Dependencies
 
 local type Query = require("luarocks.core.types.query").Query
 
@@ -24,10 +23,6 @@ local vendored_build_type_set: {string: boolean} = {
    ["module"] = true, -- compatibility alias
    ["none"] = true,
 }
-
-local rockspec_mt: metatable<Rockspec> = {}
-
-rockspec_mt.__index = rock.Rockspec
 
 --- Perform platform-specific overrides on a table.
 -- Overrides values of table with the contents of the appropriate
@@ -183,7 +178,7 @@ function rockspecs.from_persisted_table(filename: string, rockspec: Rockspec, gl
       configure_paths(rockspec)
    end
 
-   return setmetatable(rockspec, rockspec_mt)
+   return rockspec
 end
 
 return rockspecs
