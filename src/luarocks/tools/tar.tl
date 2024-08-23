@@ -4,19 +4,19 @@ local record tar
    record Header
       name: string
       mode: string
-      uid: number
-      gid: number
-      size: number
-      mtime: number
-      chksum: number
+      uid: integer
+      gid: integer
+      size: integer
+      mtime: integer
+      chksum: integer
       typeflag: string
       linkname: string
       magic: string
       version: string
       uname: string
       gname: string
-      devmajor: number
-      devminor: number
+      devmajor: integer
+      devminor: integer
       prefix: string
    end
 end
@@ -46,16 +46,16 @@ local function get_typeflag(flag: string): string
    return "unknown"
 end
 
-local function octal_to_number(octal: string): number
+local function octal_to_number(octal: string): integer
    local exp = 0
-   local number: number = 0
+   local number: integer = 0
    octal = octal:gsub("%s", "")
    for i = #octal,1,-1 do
-      local digit = tonumber(octal:sub(i,i))
+      local digit = math.tointeger(octal:sub(i,i))
       if not digit then
          break
       end
-      number = number + (digit * 8^exp)
+      number = number + (digit * math.tointeger(8^exp))
       exp = exp + 1
    end
    return number
@@ -148,7 +148,7 @@ function tar.untar(filename: string, destdir: string): boolean, string
          local nread = math.ceil(header.size / blocksize) * blocksize
          file_data = tar_handle:read(header.size)
          if nread > header.size then
-            tar_handle:seek("cur", nread - header.size as integer) --! cast to integer
+            tar_handle:seek("cur", nread - header.size)
          end
       end
 
