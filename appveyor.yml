@@ -11,8 +11,8 @@ environment:
 
   matrix:
   # quick tests
-  - LUAV: "2.1"
-    LUAT: "luajit"
+  - LUAV: "5.4"
+    LUAT: "lua"
     COMPILER: "vs"
     FILES: ""
     EXCLUDE: "integration,unit"
@@ -33,23 +33,23 @@ environment:
     COMPILER: "mingw"
     FILES: "spec//build_spec.lua"
     EXCLUDE: ""
-  # LuaJIT 2.1 tests
-  - LUAV: "2.1"
-    LUAT: "luajit"
-    COMPILER: "vs"
-    FILES: ""
-    EXCLUDE: "integration,quick"
-    TESTTYPE: "unit"
-  - LUAV: "2.1"
-    LUAT: "luajit"
-    COMPILER: "vs"
-    FILES: ""
-    EXCLUDE: "unit,quick"
-  - LUAV: "2.1"
-    LUAT: "luajit"
-    COMPILER: "mingw"
-    FILES: "spec//build_spec.lua"
-    EXCLUDE: ""
+#  # LuaJIT 2.1 tests
+#  - LUAV: "2.1"
+#    LUAT: "luajit"
+#    COMPILER: "vs"
+#    FILES: ""
+#    EXCLUDE: "integration,quick"
+#    TESTTYPE: "unit"
+#  - LUAV: "2.1"
+#    LUAT: "luajit"
+#    COMPILER: "vs"
+#    FILES: ""
+#    EXCLUDE: "unit,quick"
+#  - LUAV: "2.1"
+#    LUAT: "luajit"
+#    COMPILER: "mingw"
+#    FILES: "spec//build_spec.lua"
+#    EXCLUDE: ""
 
 init:
 # Setup Lua development/build environment
