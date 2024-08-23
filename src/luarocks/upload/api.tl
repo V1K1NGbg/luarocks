@@ -50,7 +50,7 @@ local function encode_query_string(t: Parameters, sep?: string): string
    end
    local i = 0
    local buf: {string} = { }
-   for k, v in pairs(t) do --! pairs problem for Parameters
+   for k, v in pairs(t) do
       local ks, vs: string, string
       local vf = v
       if vf is File then
@@ -249,7 +249,7 @@ function api.Api:method(path: string, ...: Parameters): {string : any}, string
    return res
 end
 
-function api.Api:save_config(): boolean, string --! nil?
+function api.Api:save_config(): boolean, string
    -- Test configuration before saving it.
    local res, errraw = self:raw_method("status")
    if not res then
