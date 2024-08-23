@@ -369,9 +369,9 @@ function patch.read_patch(filename: string, data: string): Files, boolean
         state = 'header'
       else
         hunkinfo.startsrc = math.tointeger(m1)
-        hunkinfo.linessrc = math.tointeger(math.tointeger(m2) or 1) --!
+        hunkinfo.linessrc = math.tointeger(m2) or 1
         hunkinfo.starttgt = math.tointeger(m3)
-        hunkinfo.linestgt = math.tointeger(math.tointeger(m4) or 1)
+        hunkinfo.linestgt = math.tointeger(m4) or 1
         hunkinfo.invalid = false
         hunkinfo.text = {}
 
