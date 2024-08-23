@@ -3,7 +3,6 @@ local record build
    record Builder
       skip_lua_inc_lib_check: boolean
       run: function(Rockspec, boolean): boolean, string, string
-      autodetect_modules: function({string}, {string}, {string}):  {string : string | Module}, Build.Install, {string}
    end
 end
 
