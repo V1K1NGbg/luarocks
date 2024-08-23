@@ -5,4 +5,4 @@ local record hardcoded
    LUA: string
 end
 
-return hardcoded
+return hardcoded as {string: string}
