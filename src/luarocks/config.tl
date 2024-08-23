@@ -19,7 +19,7 @@ end
 local function cleanup(tbl: PersistableTable): PersistableTable
    local copy = {}
    for k, v in pairs(tbl) do
-      if not (k is string and config.should_skip(k, v)) then --? tostring(k) of k is string and...
+      if not (k is string and config.should_skip(k, v)) then
          copy[k] = v
       end
    end
