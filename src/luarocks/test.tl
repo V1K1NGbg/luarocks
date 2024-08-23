@@ -65,7 +65,6 @@ function test.run_test_suite(rockspec_arg: string | Rockspec, test_type: string,
          return nil, err
       end
    end
-   assert(test_type) --!
 
    local all_deps = {
       "dependencies",
@@ -81,17 +80,9 @@ function test.run_test_suite(rockspec_arg: string | Rockspec, test_type: string,
       end
    end
 
-   local pok, test_mod: boolean, TestRunner
-   if test_type == "command" then
-      pok, test_mod = pcall(require, "luarocks.test.command")
-      if not pok then
-         return nil, "failed loading test execution module luarocks.test.command"
-      end
-   elseif test_type == "busted" then
-      pok, test_mod = pcall(require, "luarocks.test.busted")
-      if not pok then
-         return nil, "failed loading test execution module luarocks.test.busted"
-      end
+   local pok, test_mod = pcall(require, "luarocks.test."..test_type) as (boolean, TestRunner)
+   if not pok then
+      return nil, "failed loading test execution module luarocks.test."..test_type
    end
 
    if prepare then
