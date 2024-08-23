@@ -107,7 +107,7 @@ end
 -- only their types. Tables are type checked recursively.
 -- @param version string: The version of the item.
 -- @param item any: The object being checked.
--- @param typetbl any: The type-ch`ecking table for the object.
+-- @param typetbl any: The type-checking table for the object.
 -- @param context string: A string indicating the "context" where the
 -- error occurred (the full table path), for error messages.
 -- @return boolean or (nil, string): true if type checking
@@ -122,7 +122,6 @@ local function type_check_item(version: string, item: any, typetbl: TableSchema,
       end
    end
 
-   -- local item_type = type(item) or "nil"
    local expected_type = typetbl._type or "table"
 
    if expected_type == "number" then
@@ -184,7 +183,7 @@ end
 -- to be used by error messages.
 -- @return boolean or (nil, string): true if type checking
 -- succeeded, or nil and an error message if it failed.
-function type_check.type_check_table(version: string, tbl: {any: any}, typetbl: TableSchema, context: string): boolean, string --! tbl and typetbl types
+function type_check.type_check_table(version: string, tbl: {any: any}, typetbl: TableSchema, context: string): boolean, string
 
    local okcheck, errcheck = check_version(version, typetbl, context)
    if not okcheck then
@@ -197,7 +196,7 @@ function type_check.type_check_table(version: string, tbl: {any: any}, typetbl: 
    end
 
    for k, v in pairs(tbl) do
-      local t = typetbl.fields[tostring(k)] or typetbl._any --! tostring
+      local t = typetbl.fields[tostring(k)] or typetbl._any
       if t then
          local ok, err = type_check_item(version, v, t, mkfield(context, k))
          if not ok then return nil, err end
