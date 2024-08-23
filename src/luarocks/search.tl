@@ -277,14 +277,8 @@ function search.find_rock_checking_lua_versions(query: Query, check_lua_versions
             if #query.constraints == 0 then
                add = query.name.." supports "..versions_message
             elseif #query.constraints == 1 and query.constraints[1].op == "==" then
-               local queryversionstr: string
-               local queryversion = query.constraints[1].version
-               if queryversion is Version then 
-                  queryversionstr = queryversion.string
-               else
-                  queryversionstr = queryversion
-               end
-               add = query.name.." "..queryversionstr.." supports "..versions_message
+               local queryversion = tostring(query.constraints[1].version)
+               add = query.name.." "..queryversion.." supports "..versions_message
             else
                add = "Matching "..query.name.." versions support "..versions_message
             end
