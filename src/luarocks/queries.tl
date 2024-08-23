@@ -16,10 +16,6 @@ local query_mt: metatable<Query> = {}
 
 query_mt.__index = query.Query
 
-function query.Query.type(): string  --? remove later
-   return "query"
-end
-
 -- Fallback default value for the `arch` field, if not explicitly set.
 query.Query.arch = {
    src = true,
