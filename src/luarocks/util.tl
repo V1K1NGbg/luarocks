@@ -27,14 +27,6 @@ local record util
       fn: function(...: any)
       args: table.PackTable<any>
    end
-
-   record Parser
-      option: function(Parser, ...: string): Parser
-      argname: function(Parser, string): Parser
-      choices: function(Parser, {string}): Parser
-      flag: function(Parser, string): Parser
-      hidden: function(Parser, boolean): Parser
-   end
 end
 
 util.cleanup_path = core.cleanup_path
