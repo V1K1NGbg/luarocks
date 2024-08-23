@@ -7,7 +7,6 @@ local record result
         namespace: string
         arch: string
         repo: string
-        type: function(): string
         satisfies: function(Result, Query): boolean
      end
 end

@@ -71,7 +71,6 @@ local record rockspec
         hooks: Hooks
         test: Test
         deploy: Deploy
-        type: function(): string
         format_is_at_least: function(Rockspec, string): boolean
     end
 end

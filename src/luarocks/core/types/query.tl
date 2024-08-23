@@ -7,7 +7,6 @@ local record query
         constraints: {Constraint}
         substring: boolean
         arch: {string: boolean}
-        type: function(): string
      end
 end
 
