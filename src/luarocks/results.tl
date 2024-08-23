@@ -12,10 +12,6 @@ local result_mt: metatable<Result> = {}
 
 result_mt.__index = result.Result
 
-function result.Result.type(): string --? remove later
-   return "result"
-end
-
 function results.new(name: string, version: string, repo: string, arch?: string, namespace?: string): Result, boolean
 
    assert(not name:match("/"))
