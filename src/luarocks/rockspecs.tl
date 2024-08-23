@@ -29,10 +29,6 @@ local rockspec_mt: metatable<Rockspec> = {}
 
 rockspec_mt.__index = rock.Rockspec
 
-function rock.Rockspec.type(): string
-   return "rockspec"
-end
-
 --- Perform platform-specific overrides on a table.
 -- Overrides values of table with the contents of the appropriate
 -- subset of its "platforms" field. The "platforms" field should
