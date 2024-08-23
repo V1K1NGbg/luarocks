@@ -1,6 +1,15 @@
 
 --- Functions related to fetching and loading local and remote files.
 local record fetch
+   fetch_caching: function(string, ?string): string, string, string, boolean
+   fetch_url: function(string, ?string, ?boolean, ?string): string, string, string, boolean
+   fetch_url_at_temp_dir: function(string, string, ?string, ?boolean): string, string, string
+   find_base_dir: function(string, string, string, ?string): string, string
+   fetch_and_unpack_rock: function(string, ?string, ?boolean): string, string, string
+   load_local_rockspec: function(string, ?boolean): Rockspec, string
+   load_rockspec: function(string, ?string, ?boolean): Rockspec, string, string
+   find_rockspec_source_dir: function(Rockspec, string): boolean, string
+   fetch_sources: function(Rockspec, boolean, ?string): string, string, string, string, string
    record Fetch
       get_sources: function(Rockspec, boolean, ?string): string, string
    end
@@ -15,9 +24,77 @@ local util = require("luarocks.util")
 local cfg = require("luarocks.core.cfg")
 
 local type Fetch = fetch.Fetch
-local type Lock = fs.Lock --!
+local type Lock = fs.Lock
 local type Rockspec = require("luarocks.core.types.rockspec").Rockspec
 
+
+--- Fetch a local or remote file, using a local cache directory.
+-- Make a remote or local URL/pathname local, fetching the file if necessary.
+-- Other "fetch" and "load" functions use this function to obtain files.
+-- If a local pathname is given, it is returned as a result.
+-- @param url string: a local pathname or a remote URL.
+-- @param mirroring string: mirroring mode.
+-- If set to "no_mirror", then rocks_servers mirror configuration is not used.
+-- @return (string, nil, nil, boolean) or (nil, string, [string]):
+-- in case of success:
+-- * the absolute local pathname for the fetched file
+-- * nil
+-- * nil
+-- * `true` if the file was fetched from cache
+-- in case of failure:
+-- * nil
+-- * an error message
+-- * an optional error code.
+function fetch.fetch_caching(url: string, mirroring?: string): string, string, string, boolean
+   local repo_url, filename = url:match("^(.*)/([^/]+)$")
+   local name = repo_url:gsub("[/:]","_")
+   local cache_dir = dir.path(cfg.local_cache, name)
+   local ok = fs.make_dir(cache_dir)
+
+   local cachefile = dir.path(cache_dir, filename)
+   local checkfile = cachefile .. ".check"
+
+   if (fs.file_age(checkfile) < 10 or
+      cfg.aggressive_cache and (not name:match("^manifest"))) and fs.exists(cachefile)
+   then
+      return cachefile, nil, nil, true
+   end
+
+   local lock, errlock: Lock, string
+   if ok then
+      lock, errlock = fs.lock_access(cache_dir)
+   end
+
+   if not (ok and lock) then
+      cfg.local_cache = fs.make_temp_dir("local_cache")
+      if not cfg.local_cache then
+         return nil, "Failed creating temporary local_cache directory"
+      end
+      cache_dir = dir.path(cfg.local_cache, name)
+      ok = fs.make_dir(cache_dir)
+      if not ok then
+         return nil, "Failed creating temporary cache directory "..cache_dir
+      end
+      lock = fs.lock_access(cache_dir)
+   end
+
+   local file, err, errcode, from_cache = fetch.fetch_url(url, cachefile, true, mirroring)
+   if not file then
+      fs.unlock_access(lock)
+      return nil, err or "Failed downloading "..url, errcode
+   end
+
+   local fd, erropen = io.open(checkfile, "wb")
+   if erropen then
+      fs.unlock_access(lock)
+      return nil, erropen
+   end
+   fd:write("!")
+   fd:close()
+
+   fs.unlock_access(lock)
+   return file, nil, nil, from_cache
+end
 
 local function ensure_trailing_slash(url: string): string
    return (url:gsub("/*$", "/"))
@@ -125,76 +202,6 @@ function fetch.fetch_url(url: string, filename?: string, cache?: boolean, mirror
    end
 end
 
-
---- Fetch a local or remote file, using a local cache directory.
--- Make a remote or local URL/pathname local, fetching the file if necessary.
--- Other "fetch" and "load" functions use this function to obtain files.
--- If a local pathname is given, it is returned as a result.
--- @param url string: a local pathname or a remote URL.
--- @param mirroring string: mirroring mode.
--- If set to "no_mirror", then rocks_servers mirror configuration is not used.
--- @return (string, nil, nil, boolean) or (nil, string, [string]):
--- in case of success:
--- * the absolute local pathname for the fetched file
--- * nil
--- * nil
--- * `true` if the file was fetched from cache
--- in case of failure:
--- * nil
--- * an error message
--- * an optional error code.
-function fetch.fetch_caching(url: string, mirroring?: string): string, string, string, boolean
-   local repo_url, filename = url:match("^(.*)/([^/]+)$")
-   local name = repo_url:gsub("[/:]","_")
-   local cache_dir = dir.path(cfg.local_cache, name)
-   local ok = fs.make_dir(cache_dir)
-
-   local cachefile = dir.path(cache_dir, filename)
-   local checkfile = cachefile .. ".check"
-
-   if (fs.file_age(checkfile) < 10 or
-      cfg.aggressive_cache and (not name:match("^manifest"))) and fs.exists(cachefile)
-   then
-      return cachefile, nil, nil, true
-   end
-
-   local lock, errlock: Lock, string
-   if ok then
-      lock, errlock = fs.lock_access(cache_dir)
-   end
-
-   if not (ok and lock) then
-      cfg.local_cache = fs.make_temp_dir("local_cache")
-      if not cfg.local_cache then
-         return nil, "Failed creating temporary local_cache directory"
-      end
-      cache_dir = dir.path(cfg.local_cache, name)
-      ok = fs.make_dir(cache_dir)
-      if not ok then
-         return nil, "Failed creating temporary cache directory "..cache_dir
-      end
-      lock = fs.lock_access(cache_dir)
-   end
-
-   local file, err, errcode, from_cache = fetch.fetch_url(url, cachefile, true, mirroring)
-   if not file then
-      fs.unlock_access(lock)
-      return nil, err or "Failed downloading "..url, errcode
-   end
-
-   local fd, erropen = io.open(checkfile, "wb")
-   if erropen then
-      fs.unlock_access(lock)
-      return nil, erropen
-   end
-   fd:write("!")
-   fd:close()
-
-   fs.unlock_access(lock)
-   return file, nil, nil, from_cache
-end
-
-
 --- For remote URLs, create a temporary directory and download URL inside it.
 -- This temporary directory will be deleted on program termination.
 -- For local URLs, just return the local pathname and its directory.
@@ -250,54 +257,6 @@ function fetch.fetch_url_at_temp_dir(url: string, tmpname: string, filename?: st
    end
 end
 
-function fetch.find_rockspec_source_dir(rockspec: Rockspec, store_dir: string): boolean, string
-   local ok, err = fs.change_dir(store_dir)
-   if not ok then return nil, err end
-
-   local file_count, dir_count = 0, 0
-   local found_dir: string
-
-   if rockspec.source.dir and fs.exists(rockspec.source.dir) then
-      ok, err = true, nil
-   elseif rockspec.source.file and rockspec.source.dir then
-      ok, err = nil, "Directory "..rockspec.source.dir.." not found inside archive "..rockspec.source.file
-   elseif not rockspec.source.dir_set then -- and rockspec:format_is_at_least("3.0") then
-
-      local name = dir.base_name(rockspec.source.file or rockspec.source.url or "")
-
-      if name:match("%.lua$") or name:match("%.c$") then
-         if fs.is_file(name) then
-            rockspec.source.dir = "."
-            ok, err = true, nil
-         end
-      end
-
-      if not rockspec.source.dir then
-         for file in fs.dir() do
-            file_count = file_count + 1
-            if fs.is_dir(file) then
-               dir_count = dir_count + 1
-               found_dir = file
-            end
-         end
-
-         if dir_count == 1 then
-            rockspec.source.dir = found_dir
-            ok, err = true, nil
-         else
-            ok, err = nil, "Could not determine source directory from rock contents (" .. tostring(file_count).." file(s), "..tostring(dir_count).." dir(s))"
-         end
-      end
-   else
-      ok, err = nil, "Could not determine source directory, please set source.dir in rockspec."
-   end
-
-   fs.pop_dir()
-
-   assert(rockspec.source.dir or not ok)
-   return ok, err
-end
-
 -- Determine base directory of a fetched URL by extracting its
 -- archive and looking for a directory in the root.
 -- @param file string: absolute local pathname of the fetched file
@@ -350,6 +309,7 @@ function fetch.find_base_dir(file: string, temp_dir: string, src_url: string, sr
    fs.pop_dir()
    return inferred_dir, found_dir
 end
+
 
 local function fetch_and_verify_signature_for(url: string, filename: string, tmpdir: string): string, string, string
    local sig_url = signing.signature_url(url)
@@ -552,6 +512,54 @@ function fetch.get_sources(rockspec: Rockspec, extract: boolean, dest_dir?: stri
       fs.pop_dir()
    end
    return source_file, store_dir
+end
+
+function fetch.find_rockspec_source_dir(rockspec: Rockspec, store_dir: string): boolean, string
+   local ok, err = fs.change_dir(store_dir)
+   if not ok then return nil, err end
+
+   local file_count, dir_count = 0, 0
+   local found_dir: string
+
+   if rockspec.source.dir and fs.exists(rockspec.source.dir) then
+      ok, err = true, nil
+   elseif rockspec.source.file and rockspec.source.dir then
+      ok, err = nil, "Directory "..rockspec.source.dir.." not found inside archive "..rockspec.source.file
+   elseif not rockspec.source.dir_set then -- and rockspec:format_is_at_least("3.0") then
+
+      local name = dir.base_name(rockspec.source.file or rockspec.source.url or "")
+
+      if name:match("%.lua$") or name:match("%.c$") then
+         if fs.is_file(name) then
+            rockspec.source.dir = "."
+            ok, err = true, nil
+         end
+      end
+
+      if not rockspec.source.dir then
+         for file in fs.dir() do
+            file_count = file_count + 1
+            if fs.is_dir(file) then
+               dir_count = dir_count + 1
+               found_dir = file
+            end
+         end
+
+         if dir_count == 1 then
+            rockspec.source.dir = found_dir
+            ok, err = true, nil
+         else
+            ok, err = nil, "Could not determine source directory from rock contents (" .. tostring(file_count).." file(s), "..tostring(dir_count).." dir(s))"
+         end
+      end
+   else
+      ok, err = nil, "Could not determine source directory, please set source.dir in rockspec."
+   end
+
+   fs.pop_dir()
+
+   assert(rockspec.source.dir or not ok)
+   return ok, err
 end
 
 --- Download sources for building a rock, calling the appropriate protocol method.
