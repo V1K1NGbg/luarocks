@@ -51,7 +51,7 @@ local function rand_string(len: integer): string
       if math.random() >= 0.5 then
         r = r - 32
       end
-      shuffled[i as integer] = r  --! cast because math.tointeger returns an integer?
+      shuffled[i] = r
    end
    return string.char(table.unpack(shuffled))
 end
@@ -64,8 +64,8 @@ end
 --   {key2, value2},
 --   key3: value3
 -- }
-function multipart.encode(params: Parameters): string, string --! Table map type
-   local tuples: {{string, string | File}} = {} --! type
+function multipart.encode(params: Parameters): string, string
+   local tuples: {{string, string | File}} = {}
    for k,v in pairs(params) do
       if k is string then
          table.insert(tuples, {k, v})
